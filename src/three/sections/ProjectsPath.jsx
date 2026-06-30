@@ -28,6 +28,9 @@ function Preview({ accent, active }) {
   );
 }
 
+// Geometría del marco compartida (se calcula una sola vez).
+const PANEL_EDGES = new THREE.EdgesGeometry(new THREE.BoxGeometry(3.4, 4.2, 0.08));
+
 function ProjectPanel({ project, position, rotationY }) {
   const ref = useRef();
   const panelMat = useRef();
@@ -59,25 +62,23 @@ function ProjectPanel({ project, position, rotationY }) {
           document.body.style.cursor = 'auto';
         }}
       >
-        {/* Panel translúcido */}
+        {/* Panel translúcido (material ligero, sin transmission para evitar lag) */}
         <mesh>
           <boxGeometry args={[3.4, 4.2, 0.08]} />
-          <meshPhysicalMaterial
+          <meshStandardMaterial
             ref={panelMat}
             color={palette.charcoal}
             transparent
             opacity={0.16}
-            transmission={0.6}
-            roughness={0.15}
-            metalness={0.1}
+            roughness={0.2}
+            metalness={0.2}
             emissive={project.accent}
             emissiveIntensity={0.15}
           />
         </mesh>
 
         {/* Marco luminoso */}
-        <lineSegments>
-          <edgesGeometry args={[new THREE.BoxGeometry(3.4, 4.2, 0.08)]} />
+        <lineSegments geometry={PANEL_EDGES}>
           <lineBasicMaterial color={project.accent} transparent opacity={0.9} toneMapped={false} />
         </lineSegments>
 

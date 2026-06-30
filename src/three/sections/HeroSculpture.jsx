@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Text, Float } from '@react-three/drei';
 import * as THREE from 'three';
@@ -30,35 +30,90 @@ function useFractalGraph() {
   }, []);
 }
 
+// Escudo de energía exterior: gira y respira solo, SIN interacción
+// (raycast desactivado para que el cursor alcance la escultura interior).
+function EnergyShield() {
+  const ref = useRef();
+  useFrame((state, delta) => {
+    const s = ref.current;
+    if (!s) return;
+    s.rotation.y -= delta * 0.08;
+    s.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 1.2) * 0.03);
+  });
+  return (
+    <group ref={ref}>
+      <mesh raycast={() => null}>
+        <icosahedronGeometry args={[2.5, 1]} />
+        <meshStandardMaterial
+          color={palette.amethyst}
+          emissive={palette.amethyst}
+          emissiveIntensity={0.5}
+          transparent
+          opacity={0.14}
+          wireframe
+        />
+      </mesh>
+      <mesh raycast={() => null}>
+        <sphereGeometry args={[2.45, 24, 24]} />
+        <meshBasicMaterial color={palette.amethyst} transparent opacity={0.05} side={THREE.BackSide} />
+      </mesh>
+    </group>
+  );
+}
+
 export default function HeroSculpture() {
   const groupRef = useRef();
   const instRef = useRef();
-  const shieldRef = useRef();
   const matRef = useRef();
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
+  // Estado de arrastre de la escultura interior
+  const dragging = useRef(false);
+  const last = useRef({ x: 0, y: 0 });
+  const vel = useRef({ x: 0, y: 0 });
+
   const { pts, edges } = useFractalGraph();
   const lineGeo = useMemo(() => new THREE.BufferGeometry().setFromPoints(edges), [edges]);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!dragging.current) return;
+      const dx = e.clientX - last.current.x;
+      const dy = e.clientY - last.current.y;
+      last.current = { x: e.clientX, y: e.clientY };
+      vel.current = { x: dy * 0.006, y: dx * 0.006 };
+      if (groupRef.current) {
+        groupRef.current.rotation.y += dx * 0.006;
+        groupRef.current.rotation.x += dy * 0.006;
+      }
+    };
+    const onUp = () => {
+      dragging.current = false;
+      document.body.style.cursor = 'auto';
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+  }, []);
 
   useFrame((state, delta) => {
     const g = groupRef.current;
     if (!g) return;
     const t = state.clock.elapsedTime;
 
-    // Giro autónomo + reacción al cursor
-    g.rotation.y += delta * 0.18;
-    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, state.pointer.y * 0.4, 3, delta);
-    g.rotation.z = THREE.MathUtils.damp(g.rotation.z, -state.pointer.x * 0.25, 3, delta);
+    // Giro autónomo + inercia tras soltar (cuando no se está arrastrando)
+    if (!dragging.current) {
+      g.rotation.y += delta * 0.18 + vel.current.y;
+      g.rotation.x += vel.current.x;
+      vel.current.x *= 0.94;
+      vel.current.y *= 0.94;
+    }
 
     // Destellos del oro
     if (matRef.current) matRef.current.emissiveIntensity = 0.6 + Math.sin(t * 2.5) * 0.35;
-
-    // Escudo de energía: respira y contrarrota
-    if (shieldRef.current) {
-      shieldRef.current.rotation.y -= delta * 0.1;
-      const s = 1 + Math.sin(t * 1.2) * 0.03;
-      shieldRef.current.scale.setScalar(s);
-    }
 
     // Coloca los nodos instanciados una sola vez
     const mesh = instRef.current;
@@ -76,7 +131,23 @@ export default function HeroSculpture() {
 
   return (
     <group>
-      <group ref={groupRef}>
+      {/* Escultura interior ARRASTRABLE */}
+      <group
+        ref={groupRef}
+        onPointerOver={() => {
+          if (!dragging.current) document.body.style.cursor = 'grab';
+        }}
+        onPointerOut={() => {
+          if (!dragging.current) document.body.style.cursor = 'auto';
+        }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          dragging.current = true;
+          last.current = { x: e.clientX, y: e.clientY };
+          vel.current = { x: 0, y: 0 };
+          document.body.style.cursor = 'grabbing';
+        }}
+      >
         {/* Nodos de datos en oro pulido */}
         <instancedMesh ref={instRef} args={[null, null, NODES]}>
           <octahedronGeometry args={[1, 0]} />
@@ -100,51 +171,54 @@ export default function HeroSculpture() {
           <icosahedronGeometry args={[0.55, 1]} />
           <meshStandardMaterial color={palette.amber} emissive={palette.gold} emissiveIntensity={2} />
         </mesh>
+
+        {/* Esfera invisible que da un volumen agarrable a la escultura */}
+        <mesh>
+          <sphereGeometry args={[2.4, 16, 16]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
       </group>
 
-      {/* Escudo de energía púrpura translúcido */}
-      <mesh ref={shieldRef}>
-        <icosahedronGeometry args={[3.2, 1]} />
-        <meshStandardMaterial
-          color={palette.amethyst}
-          emissive={palette.amethyst}
-          emissiveIntensity={0.5}
-          transparent
-          opacity={0.12}
-          wireframe
-        />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[3.15, 32, 32]} />
-        <meshBasicMaterial color={palette.amethyst} transparent opacity={0.04} side={THREE.BackSide} />
-      </mesh>
+      {/* Escudo de energía exterior (no interactivo) */}
+      <EnergyShield />
 
-      {/* Texto 3D flotante */}
-      <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.6}>
+      {/* Identidad — tamaño y posición ajustados para caber dentro del encuadre
+          en la posición de lectura final de la cámara (no quedar cortado arriba). */}
+      <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
         <Text
-          position={[0, 3.4, 0]}
-          fontSize={0.62}
-          maxWidth={9}
-          textAlign="center"
+          position={[0, 3.55, 0]}
+          fontSize={0.6}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.02}
+          letterSpacing={0.04}
           color={palette.gold}
         >
-          SOLUCIONES DE SOFTWARE ESCALABLES
-          <meshStandardMaterial color={palette.gold} emissive={palette.amber} emissiveIntensity={1.4} toneMapped={false} />
+          SIMÓN BUGUEÑO
+          <meshStandardMaterial color={palette.gold} emissive={palette.amber} emissiveIntensity={1.5} toneMapped={false} />
         </Text>
         <Text
-          position={[0, -3.4, 0]}
-          fontSize={0.5}
-          maxWidth={9}
+          position={[0, 2.85, 0]}
+          fontSize={0.2}
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.12}
+          color="#d4d4d8"
+        >
+          DESARROLLO DE SOFTWARE · CIBERSEGURIDAD · INACAP
+        </Text>
+
+        {/* Texto 3D requerido */}
+        <Text
+          position={[0, -3.35, 0]}
+          fontSize={0.42}
+          maxWidth={8}
           textAlign="center"
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.02}
           color={palette.amethyst}
         >
-          & ARQUITECTURA SEGURA
+          SOLUCIONES DE SOFTWARE ESCALABLES & ARQUITECTURA SEGURA
           <meshStandardMaterial color={palette.amethyst} emissive={palette.amethyst} emissiveIntensity={1.6} toneMapped={false} />
         </Text>
       </Float>

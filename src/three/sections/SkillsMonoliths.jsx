@@ -71,9 +71,7 @@ function Monolith({ group }) {
             metalness={0.7}
             roughness={0.25}
           />
-          <Edges threshold={15}>
-            <lineBasicMaterial color={group.accent} toneMapped={false} />
-          </Edges>
+          <Edges threshold={15} color={group.accent} fog />
         </mesh>
 
         <ChipTraces accent={group.accent} />

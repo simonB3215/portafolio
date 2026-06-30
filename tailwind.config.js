@@ -4,14 +4,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        graphite: '#0a0a0c',
-        charcoal: '#16161c',
-        obsidian: '#1c1c22',
-        gold: '#f5a623',
-        amber: '#ffb627',
-        burnt: '#e2571e',
-        crimson: '#dc143c',
-        amethyst: '#7c3aed',
+        graphite: '#0a0f0d',
+        charcoal: '#121a16',
+        obsidian: '#18211c',
+        gold: '#c9a86a',
+        amber: '#e3c58c',
+        bronze: '#b8895a',
+        emerald: '#3fa37a',
+        emeraldDeep: '#25634a',
+        ivory: '#e8e2d4',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

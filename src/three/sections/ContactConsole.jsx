@@ -1,22 +1,24 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Text, Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { palette } from '../../config/theme.js';
+import { getIconGeometry } from './icons.js';
 
 const links = [
-  { label: 'GitHub', url: 'https://github.com', accent: palette.gold, x: -2.4 },
-  { label: 'LinkedIn', url: 'https://linkedin.com', accent: palette.amethyst, x: 0 },
-  { label: 'Email', url: 'mailto:hola@example.com', accent: palette.crimson, x: 2.4 },
+  { label: 'GitHub', icon: 'github', url: 'https://github.com/simonB3215', accent: palette.gold, x: -2.4 },
+  { label: 'LinkedIn', icon: 'linkedin', url: 'https://linkedin.com', accent: palette.amethyst, x: 0 },
+  { label: 'Email', icon: 'email', url: 'mailto:hola@example.com', accent: palette.crimson, x: 2.4 },
 ];
 
-// Icono 3D flotante. Al hacer clic emite un pulso y redirige.
-function ContactIcon({ label, url, accent, x }) {
+// Icono 3D flotante (glifo real extruido). Al hacer clic emite un pulso y redirige.
+function ContactIcon({ label, icon, url, accent, x }) {
   const ref = useRef();
   const ringRef = useRef();
   const matRef = useRef();
   const [hovered, setHovered] = useState(false);
   const pulse = useRef(0); // 0 = inactivo, >0 = animando
+  const geometry = useMemo(() => getIconGeometry(icon), [icon]);
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -26,7 +28,12 @@ function ContactIcon({ label, url, accent, x }) {
 
   useFrame((state, delta) => {
     if (ref.current) {
-      ref.current.rotation.y += delta * (hovered ? 1.4 : 0.5);
+      // Balanceo (no giro completo): mantiene el glifo siempre legible,
+      // de frente, en vez de mostrar su reverso espejado a mitad de vuelta.
+      const t = state.clock.elapsedTime;
+      const swing = hovered ? 1.8 : 0.6;
+      const amount = hovered ? 0.5 : 0.22;
+      ref.current.rotation.y = Math.sin(t * swing + x) * amount;
       const s = THREE.MathUtils.damp(ref.current.scale.x, hovered ? 1.25 : 1, 6, delta);
       ref.current.scale.setScalar(s);
     }
@@ -67,8 +74,7 @@ function ContactIcon({ label, url, accent, x }) {
         }}
         onClick={handleClick}
       >
-        <mesh ref={ref}>
-          <icosahedronGeometry args={[0.55, 0]} />
+        <mesh ref={ref} geometry={geometry} scale={1.05}>
           <meshStandardMaterial
             ref={matRef}
             color={accent}
@@ -102,15 +108,13 @@ function CrystalPortal() {
   return (
     <group position={[0, 0, -1.5]}>
       <mesh ref={ref}>
-        <torusGeometry args={[3.4, 0.18, 24, 80]} />
-        <meshPhysicalMaterial
+        <torusGeometry args={[3.4, 0.18, 16, 64]} />
+        <meshStandardMaterial
           color={palette.amethyst}
           emissive={palette.amethyst}
-          emissiveIntensity={0.6}
-          transmission={0.6}
-          thickness={1}
-          roughness={0.1}
-          metalness={0.2}
+          emissiveIntensity={0.9}
+          roughness={0.15}
+          metalness={0.4}
           toneMapped={false}
         />
       </mesh>
