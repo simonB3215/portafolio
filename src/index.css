@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    @apply bg-graphite text-zinc-200 font-sans antialiased;
+    overflow: hidden; /* el scroll lo gestiona ScrollControls dentro del canvas */
+  }
+
+  canvas {
+    touch-action: none;
+  }
+
+  ::selection {
+    @apply bg-gold/30 text-white;
+  }
+}
+
+@layer components {
+  /* Marca de agua / HUD complementario mínimo sobre el canvas */
+  .hud {
+    @apply pointer-events-none fixed z-10 font-mono text-[11px] uppercase tracking-[0.25em] text-zinc-500;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

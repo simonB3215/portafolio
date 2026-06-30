@@ -1,0 +1,16 @@
+Actúa como un desarrollador Frontend experto especializado en experiencias web inmersivas y crea la estructura y el código base para un portafolio profesional de Desarrollo de Software y Ciberseguridad completamente en 3D e interactivo. El diseño debe ser moderno, limpio, analítico y centrado exclusivamente en elementos técnicos y visuales abstractos. Toda la interfaz debe ser un entorno 3D navegable.
+
+## Requisitos Técnicos y de Diseño
+
+1. **Tecnologías:** Utiliza React, React Three Fiber (R3F) para integrar Three.js, y Drei para utilidades 3D. Configura el entorno inicial con Vite y utiliza Tailwind CSS para interfaces complementarias necesarias de forma mínima.
+2. **Interfaz 3D Total:** Toda la información debe estar integrada como objetos 3D (texto 3D, paneles flotantes, geometrías) dentro del espacio 3D. El usuario debe moverse por el espacio tridimensional para explorar el contenido.
+3. **Paleta de Colores Exclusiva:** Diseña todo el entorno utilizando una base de negro grafito y gris carbón, con acentos luminosos de oro ámbar, naranja quemado, rojo carmesí y púrpura amatista profundo. Esta paleta debe transmitir tecnología, sofisticación y análisis técnico.
+4. **Animaciones e Interactividad:** Implementa animaciones fluidas impulsadas por el ratón y el desplazamiento (scroll controls). Utiliza Framer Motion 3D o GSAP para animaciones complejas, transiciones de cámara y efectos de retroalimentación al interactuar.
+
+## Estructura del Espacio 3D
+
+1. **Escena Central (Entorno Global):** Un vasto espacio digital oscuro con una cuadrícula de suelo luminosa (oro ámbar y púrpura) que se extiende infinitamente. Flujos de datos abstractos y partículas flotantes (rojo carmesí y ámbar) deben cruzar la escena de forma dinámica.
+2. **Sección 'HERO' (Inicio Inmersivo):** En el centro de la escena, crea una intrincada escultura fractal 3D de nodos de datos y estructuras de código en oro pulido y ámbar, rodeada por un escudo de energía púrpura translúcido. Esta escultura debe reaccionar a la posición del cursor mediante giros y destellos. Superpone el texto 3D "SOLUCIONES DE SOFTWARE ESCALABLES & ARQUITECTURA SEGURA" flotando cerca de la estructura, con efectos de brillo (bloom).
+3. **Sección 'SKILLS' (Habilidades Totem):** Crea monolitos 3D flotantes de obsidiana con texturas de microchips dorados que representen áreas de habilidad (Backend, Seguridad, etc.). Cada monolito debe tener iconos 3D integrados y texto tridimensional flotante (Python, Node.js, Auditoría, etc.). Al pasar el cursor, el monolito debe elevarse, rotar y emitir un brillo intenso.
+4. **Sección 'PROYECTOS' (Galería de Caminos):** Diseña un camino o espiral de paneles 3D translúcidos que el usuario recorre mediante scroll. Cada panel representa un proyecto a través de visuales 3D o esquemas abstractos. Al pasar el cursor por un panel, este debe reaccionar con animaciones de revelación y mostrar una pequeña animación 3D de previsualización.
+5. **Sección 'CONTACTO' (Consola Interactiva):** Al final del recorrido, crea una consola o portal 3D interactivo de cristal pulido. Incluye iconos 3D animados y flotantes para plataformas como GitHub y LinkedIn. Al interactuar con un icono, una animación de pulso debe confirmar la acción de redirección.
