@@ -7,8 +7,8 @@ import { getIconGeometry } from './icons.js';
 
 const links = [
   { label: 'GitHub', icon: 'github', url: 'https://github.com/simonB3215', accent: palette.gold, x: -2.4 },
-  { label: 'LinkedIn', icon: 'linkedin', url: 'https://linkedin.com', accent: palette.amethyst, x: 0 },
-  { label: 'Email', icon: 'email', url: 'mailto:hola@example.com', accent: palette.crimson, x: 2.4 },
+  { label: 'LinkedIn', icon: 'linkedin', url: 'https://www.linkedin.com/in/simon-bugue%C3%B1o-77a42529b/', accent: palette.amethyst, x: 0 },
+  { label: 'Email', icon: 'email', url: 'mailto:simon.bueguenio@gmail.com', accent: palette.crimson, x: 2.4 },
 ];
 
 // Icono 3D flotante (glifo real extruido). Al hacer clic emite un pulso y redirige.
@@ -17,13 +17,27 @@ function ContactIcon({ label, icon, url, accent, x }) {
   const ringRef = useRef();
   const matRef = useRef();
   const [hovered, setHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
   const pulse = useRef(0); // 0 = inactivo, >0 = animando
   const geometry = useMemo(() => getIconGeometry(icon), [icon]);
 
   const handleClick = (e) => {
     e.stopPropagation();
     pulse.current = 0.0001; // arranca el pulso
-    window.open(url, '_blank', 'noopener');
+    if (url.startsWith('mailto:')) {
+      // Si no hay cliente de correo predeterminado, location.href no hace
+      // nada visible. Copiamos la dirección al portapapeles como acción
+      // principal (siempre funciona) e intentamos abrir el cliente de
+      // correo como beneficio extra si existe.
+      const email = url.replace('mailto:', '');
+      navigator.clipboard?.writeText(email).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank', 'noopener');
+    }
   };
 
   useFrame((state, delta) => {
@@ -92,8 +106,8 @@ function ContactIcon({ label, icon, url, accent, x }) {
           <meshBasicMaterial color={accent} transparent opacity={0} side={THREE.DoubleSide} toneMapped={false} />
         </mesh>
 
-        <Text position={[0, -0.95, 0]} fontSize={0.22} anchorX="center" color="#e4e4e7">
-          {label}
+        <Text position={[0, -0.95, 0]} fontSize={0.22} anchorX="center" color={copied ? accent : '#e4e4e7'}>
+          {copied ? '¡Copiado!' : label}
         </Text>
       </group>
     </Float>

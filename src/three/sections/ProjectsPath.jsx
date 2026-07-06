@@ -5,8 +5,8 @@ import * as THREE from 'three';
 import { palette } from '../../config/theme.js';
 import { projects } from '../../data/projects.js';
 
-// Pequeña previsualización 3D que gira más rápido al hacer hover.
-function Preview({ accent, active }) {
+// Previsualización por defecto: nudo toroidal que gira más rápido al hover.
+function TorusPreview({ accent, active }) {
   const ref = useRef();
   useFrame((state, delta) => {
     if (!ref.current) return;
@@ -26,6 +26,57 @@ function Preview({ accent, active }) {
       />
     </mesh>
   );
+}
+
+// Mini planeta: núcleo esférico con anillo tipo Saturno y halo atmosférico,
+// con una leve inclinación axial para look de "planeta en el espacio".
+function MiniPlanet({ accent, active }) {
+  const ref = useRef();
+  useFrame((state, delta) => {
+    if (!ref.current) return;
+    ref.current.rotation.y += delta * (active ? 1.1 : 0.35);
+  });
+  return (
+    <group position={[0, 0.6, 0.15]} rotation={[0.35, 0, 0.18]}>
+      <group ref={ref}>
+        {/* Núcleo */}
+        <mesh>
+          <sphereGeometry args={[0.56, 32, 32]} />
+          <meshStandardMaterial
+            color={accent}
+            emissive={accent}
+            emissiveIntensity={active ? 1.3 : 0.5}
+            metalness={0.25}
+            roughness={0.55}
+            toneMapped={false}
+          />
+        </mesh>
+        {/* "Continentes" — relieve sutil sobre la superficie */}
+        <mesh scale={1.01}>
+          <icosahedronGeometry args={[0.56, 1]} />
+          <meshBasicMaterial color={accent} wireframe transparent opacity={0.3} toneMapped={false} />
+        </mesh>
+      </group>
+
+      {/* Anillo tipo Saturno */}
+      <mesh rotation={[Math.PI / 2.3, 0, 0]}>
+        <ringGeometry args={[0.79, 0.99, 48]} />
+        <meshBasicMaterial color={accent} transparent opacity={active ? 0.8 : 0.5} side={THREE.DoubleSide} toneMapped={false} />
+      </mesh>
+
+      {/* Halo atmosférico */}
+      <mesh>
+        <sphereGeometry args={[0.69, 24, 24]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.14} side={THREE.BackSide} toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
+// Router: elige la previsualización según el icono del proyecto.
+function Preview({ accent, active, icon }) {
+  if (icon === 'planet') return <MiniPlanet accent={accent} active={active} />;
+  return <TorusPreview accent={accent} active={active} />;
 }
 
 // Geometría del marco compartida (se calcula una sola vez).
@@ -55,11 +106,15 @@ function ProjectPanel({ project, position, rotationY }) {
         onPointerOver={(e) => {
           e.stopPropagation();
           setHovered(true);
-          document.body.style.cursor = 'pointer';
+          if (project.url) document.body.style.cursor = 'pointer';
         }}
         onPointerOut={() => {
           setHovered(false);
           document.body.style.cursor = 'auto';
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (project.url) window.open(project.url, '_blank', 'noopener');
         }}
       >
         {/* Panel translúcido (material ligero, sin transmission para evitar lag) */}
@@ -82,7 +137,7 @@ function ProjectPanel({ project, position, rotationY }) {
           <lineBasicMaterial color={project.accent} transparent opacity={0.9} toneMapped={false} />
         </lineSegments>
 
-        <Preview accent={project.accent} active={hovered} />
+        <Preview accent={project.accent} active={hovered} icon={project.icon} />
 
         {/* Texto del proyecto */}
         <Text position={[0, -0.4, 0.12]} fontSize={0.34} anchorX="center" color="#fafafa">
