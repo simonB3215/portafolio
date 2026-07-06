@@ -6,21 +6,34 @@ export const skillGroups = [
     id: 'backend',
     title: 'BACKEND',
     accent: palette.gold,
-    skills: ['Python', 'Node.js', 'FastAPI', 'APIs'],
+    skills: [
+      { name: 'Python', icon: 'python' },
+      { name: 'Node.js', icon: 'nodedotjs' },
+      { name: 'FastAPI', icon: 'fastapi' },
+    ],
     position: [-6.5, 0, 0],
   },
   {
     id: 'frontend',
     title: 'FRONTEND',
     accent: palette.amber,
-    skills: ['React', 'R3F', 'Three.js', 'Tailwind'],
+    skills: [
+      { name: 'React', icon: 'react' },
+      { name: 'Three.js', icon: 'threedotjs' },
+      { name: 'Tailwind', icon: 'tailwindcss' },
+    ],
     position: [-2.2, 0.6, -2],
   },
   {
     id: 'data',
     title: 'DATOS',
     accent: palette.amethyst,
-    skills: ['MongoDB', 'Supabase', 'PostgreSQL', 'Redis'],
+    skills: [
+      { name: 'MongoDB', icon: 'mongodb' },
+      { name: 'Supabase', icon: 'supabase' },
+      { name: 'PostgreSQL', icon: 'postgresql' },
+      { name: 'Redis', icon: 'redis' },
+    ],
     position: [2.2, -0.3, -2],
   },
   {

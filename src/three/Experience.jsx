@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import {
   ScrollControls,
@@ -29,7 +29,8 @@ const easeInOutCubic = (p) =>
 
 // Fase 1: zoom-in cinematográfico desde las profundidades hasta el HERO.
 // Fase 2: recorrido controlado por scroll con parallax del ratón.
-function CameraRig({ onIntroDone }) {
+// Fase 3: zoom a sección seleccionada.
+function CameraRig({ onIntroDone, selectedSkill, onDeselect }) {
   const scroll = useScroll();
   const startZ = 9;
   const endZ = stations.contact + 9;
@@ -44,6 +45,7 @@ function CameraRig({ onIntroDone }) {
 
   const elapsed = useRef(0);
   const done = useRef(false);
+  const lastScrollOffset = useRef(0);
 
   useFrame((state, delta) => {
     const cam = state.camera;
@@ -76,6 +78,32 @@ function CameraRig({ onIntroDone }) {
       onIntroDone?.();
     }
 
+    // --- Fase selección de sección ---
+    if (selectedSkill) {
+      // Si el usuario intenta scrollear, deselecciona
+      if (Math.abs(scroll.offset - lastScrollOffset.current) > 0.01) {
+        onDeselect?.();
+        lastScrollOffset.current = scroll.offset;
+      } else {
+        // selectedSkill.position ya viene en coordenadas mundiales (getWorldPosition).
+        // Vista frontal y alineada con el monolito (no en ángulo) a una distancia
+        // que encuadre título + iconos sin atravesar la caja (altura total ~5.5).
+        const [sx, sy, sz] = selectedSkill.position;
+        const targetX = sx;
+        const targetY = sy + 0.6;
+        const targetZ = sz + 8;
+
+        cam.position.x = MathUtils.damp(cam.position.x, targetX, 4, delta);
+        cam.position.y = MathUtils.damp(cam.position.y, targetY, 4, delta);
+        cam.position.z = MathUtils.damp(cam.position.z, targetZ, 4, delta);
+        cam.lookAt(sx, sy, sz);
+        return; // Mientras hay selección, no ejecutar scroll
+      }
+    }
+
+    // Guarda el offset actual para detectar scroll
+    lastScrollOffset.current = scroll.offset;
+
     // --- Fase scroll ---
     const targetZ = startZ + (endZ - startZ) * scroll.offset;
     const px = state.pointer.x;
@@ -91,14 +119,14 @@ function CameraRig({ onIntroDone }) {
   return null;
 }
 
-function Sections() {
+function Sections({ onSelectSkill }) {
   return (
     <>
       <group position={[0, 0, stations.hero]}>
         <HeroSculpture />
       </group>
       <group position={[0, 0, stations.skills]}>
-        <SkillsMonoliths />
+        <SkillsMonoliths onSelectSkill={onSelectSkill} />
       </group>
       <group position={[0, 0, stations.projects]}>
         <ProjectsPath />
@@ -114,11 +142,36 @@ export default function Experience({ onPerf, onIntroDone }) {
   const lightRef = useRef();
   // El scroll permanece bloqueado hasta que termina la intro cinematográfica.
   const [introDone, setIntroDone] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState(null);
 
   const handleIntroDone = () => {
     setIntroDone(true);
     onIntroDone?.();
   };
+
+  const handleSelectSkill = (skillId, position) => {
+    setSelectedSkill({ id: skillId, position });
+  };
+
+  const handleDeselect = () => {
+    if (selectedSkill) {
+      setSelectedSkill(null);
+    }
+  };
+
+  // Mientras hay una habilidad seleccionada, cualquier click (incluso fuera del
+  // canvas de R3F) la deselecciona. Se registra con un pequeño retraso para no
+  // capturar el mismo click que originó la selección.
+  useEffect(() => {
+    if (!selectedSkill) return;
+    const timer = setTimeout(() => {
+      window.addEventListener('pointerdown', handleDeselect);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('pointerdown', handleDeselect);
+    };
+  }, [selectedSkill]);
 
   return (
     <>
@@ -140,8 +193,8 @@ export default function Experience({ onPerf, onIntroDone }) {
         {/* Entorno global */}
         <GridFloor />
 
-        <CameraRig onIntroDone={handleIntroDone} />
-        <Sections />
+        <CameraRig onIntroDone={handleIntroDone} selectedSkill={selectedSkill} onDeselect={handleDeselect} />
+        <Sections onSelectSkill={handleSelectSkill} />
 
         <Effects />
       </ScrollControls>
